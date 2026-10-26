@@ -1,0 +1,11 @@
+
+OLLAMA_LLM_MODEL = "llama3"
+OLLAMA_EMBEDDING_MODEL = "nomic-embed-text"
+
+CHUNK_SIZE = 1000
+CHUNK_OVERLAP = 200
+
+VECTOR_STORE_DIR = "faiss_index"
+SUMMARY_FILE = "summary.txt"
+
+TEMPERATURE = 0.2
