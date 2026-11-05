@@ -7,6 +7,7 @@ from uuid import uuid4
 from backend.database import get_db
 from backend.models import Part
 from backend.schemas import PartCreate, PartUpdate, PartResponse
+from backend.services.ai_service import generate_part_description
 
 router = APIRouter(
     prefix="/parts",
@@ -189,4 +190,49 @@ def delete_part(
         raise HTTPException(
             status_code=409,
             detail="Could not delete part due to a database conflict."
+        )
+
+
+# 7. GENERATE AI PART DESCRIPTION
+@router.post(
+    "/{part_id}/generate-description",
+    response_model=PartResponse
+)
+def generate_ai_description(
+    part_id: int,
+    db: Session = Depends(get_db)
+):
+    part = db.query(Part).filter(
+        Part.id == part_id
+    ).first()
+
+    if not part:
+        raise HTTPException(
+            status_code=404,
+            detail="Part not found."
+        )
+
+    try:
+        description = generate_part_description(
+            part_name=part.name,
+            category=part.category,
+            manufacturer=part.manufacturer
+        )
+
+        part.description = description
+
+        db.commit()
+        db.refresh(part)
+
+        return part
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=502,
+            detail=f"AI description generation failed: {str(error)}"
         )
